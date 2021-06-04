@@ -1,7 +1,5 @@
-<<<<<<< HEAD
+
 /* SPDX-License-Identifier: GPL-2.0 */
-=======
->>>>>>> 3e78e76de065... BACKPORT: bug: split BUILD_BUG stuff out into <linux/build_bug.h>
 #ifndef _LINUX_BUILD_BUG_H
 #define _LINUX_BUILD_BUG_H
 
@@ -85,12 +83,10 @@
 
 #endif	/* __CHECKER__ */
 
-<<<<<<< HEAD
+
 #ifdef __GENKSYMS__
 /* genksyms gets confused by _Static_assert */
 #define _Static_assert(expr, ...)
 #endif
 
-=======
->>>>>>> 3e78e76de065... BACKPORT: bug: split BUILD_BUG stuff out into <linux/build_bug.h>
 #endif	/* _LINUX_BUILD_BUG_H */
