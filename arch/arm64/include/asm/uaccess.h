@@ -391,6 +391,24 @@ do {									\
 #define put_user	__put_user
 
 extern unsigned long __must_check __arch_copy_from_user(void *to, const void __user *from, unsigned long n);
+#define raw_copy_from_user(to, from, n)					\
+({									\
+	__arch_copy_from_user((to), __uaccess_mask_ptr(from), (n));	\
+})
+
+extern unsigned long __must_check __arch_copy_to_user(void __user *to, const void *from, unsigned long n);
+#define raw_copy_to_user(to, from, n)					\
+({									\
+	__arch_copy_to_user(__uaccess_mask_ptr(to), (from), (n));	\
+})
+
+extern unsigned long __must_check __arch_copy_in_user(void __user *to, const void __user *from, unsigned long n);
+#define raw_copy_in_user(to, from, n)					\
+({									\
+	__arch_copy_in_user(__uaccess_mask_ptr(to),			\
+			    __uaccess_mask_ptr(from), (n));		\
+})
+
 extern unsigned long __must_check __arch_copy_to_user(void __user *to, const void *from, unsigned long n);
 extern unsigned long __must_check __arch_copy_in_user(void __user *to, const void __user *from, unsigned long n);
 
@@ -443,6 +461,8 @@ static inline unsigned long __must_check __copy_in_user(void __user *to, const v
 
 #define __copy_to_user_inatomic __copy_to_user
 #define __copy_from_user_inatomic __copy_from_user
+#define INLINE_COPY_TO_USER
+#define INLINE_COPY_FROM_USER
 
 extern unsigned long __must_check __arch_clear_user(void __user *to, unsigned long n);
 static inline unsigned long __must_check __clear_user(void __user *to, unsigned long n)
