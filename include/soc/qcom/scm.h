@@ -110,10 +110,30 @@ extern bool scm_is_secure_device(void);
 extern int scm_enable_mem_protection(void);
 extern int scm_get_feat_version(u32 feat);
 extern bool is_scm_armv8(void);
-
+extern int scm_call(u32 svc_id, u32 cmd_id, const void *cmd_buf, size_t cmd_len,
+		void *resp_buf, size_t resp_len);
 extern struct mutex scm_lmh_lock;
+extern int scm_call_noalloc(u32 svc_id, u32 cmd_id, const void *cmd_buf,
+		size_t cmd_len, void *resp_buf, size_t resp_len,
+		void *scm_buf, size_t scm_buf_size);
+
+
+extern s32 scm_call_atomic1(u32 svc, u32 cmd, u32 arg1);
+extern s32 scm_call_atomic1_1(u32 svc, u32 cmd, u32 arg1, u32 *ret1);
+extern s32 scm_call_atomic2(u32 svc, u32 cmd, u32 arg1, u32 arg2);
+extern s32 scm_call_atomic3(u32 svc, u32 cmd, u32 arg1, u32 arg2, u32 arg3);
+extern s32 scm_call_atomic4_3(u32 svc, u32 cmd, u32 arg1, u32 arg2, u32 arg3,
+		u32 arg4, u32 *ret1, u32 *ret2);
+extern s32 scm_call_atomic5_3(u32 svc, u32 cmd, u32 arg1, u32 arg2, u32 arg3,
+		u32 arg4, u32 arg5, u32 *ret1, u32 *ret2, u32 *ret3);
 
 #else
+
+static inline int scm_call(u32 svc_id, u32 cmd_id, const void *cmd_buf,
+		size_t cmd_len, void *resp_buf, size_t resp_len)
+{
+	return 0;
+}
 
 static inline int scm_call2(u32 cmd_id, struct scm_desc *desc)
 {
@@ -126,6 +146,45 @@ static inline int scm_call2_noretry(u32 cmd_id, struct scm_desc *desc)
 }
 
 static inline int scm_call2_atomic(u32 cmd_id, struct scm_desc *desc)
+{
+	return 0;
+}
+static inline int scm_call_noalloc(u32 svc_id, u32 cmd_id,
+		const void *cmd_buf, size_t cmd_len, void *resp_buf,
+		size_t resp_len, void *scm_buf, size_t scm_buf_size)
+{
+	return 0;
+}
+
+static inline s32 scm_call_atomic1(u32 svc, u32 cmd, u32 arg1)
+{
+	return 0;
+}
+
+static inline s32 scm_call_atomic1_1(u32 svc, u32 cmd, u32 arg1, u32 *ret1)
+{
+	return 0;
+}
+
+static inline s32 scm_call_atomic2(u32 svc, u32 cmd, u32 arg1, u32 arg2)
+{
+	return 0;
+}
+
+static inline s32 scm_call_atomic3(u32 svc, u32 cmd, u32 arg1, u32 arg2,
+		u32 arg3)
+{
+	return 0;
+}
+
+static inline s32 scm_call_atomic4_3(u32 svc, u32 cmd, u32 arg1, u32 arg2,
+		u32 arg3, u32 arg4, u32 *ret1, u32 *ret2)
+{
+	return 0;
+}
+
+static inline s32 scm_call_atomic5_3(u32 svc, u32 cmd, u32 arg1, u32 arg2,
+	u32 arg3, u32 arg4, u32 arg5, u32 *ret1, u32 *ret2, u32 *ret3)
 {
 	return 0;
 }
