@@ -1455,6 +1455,6 @@ config TOUCHSCREEN_RAYDIUM_CHIPSET
 	  If unsure, say N.
 
 config WAKE_GESTURES
-	bool "wake gestures"
+	bool "WAKE_GESTURES"
 	
 endif

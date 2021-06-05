@@ -33,6 +33,7 @@
 #include <linux/proc_fs.h>
 #include <linux/fs.h>
 #include <asm/uaccess.h>
+#include <linux/uaccess.h>
 
 #ifdef CONFIG_WAKE_GESTURES
 #include <linux/wake_gestures.h>
