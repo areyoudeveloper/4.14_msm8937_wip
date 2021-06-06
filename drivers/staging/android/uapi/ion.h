@@ -77,7 +77,7 @@ enum ion_heap_type {
  */
 struct ion_allocation_data {
 	__u64 len;
-    __u64 align
+    __u64 align;
 	__u32 heap_id_mask;
 	__u32 flags;
 	__u32 fd;
