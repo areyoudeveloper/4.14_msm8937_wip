@@ -19,7 +19,7 @@
 #include <linux/types.h>
 #include <media/msm_vidc.h>
 #include "msm_vidc_resources.h"
-
+#define ion_phys_addr_t phys_addr_t
 #define CONTAINS(__a, __sz, __t) ({\
 	int __rc = __t >= __a && \
 			__t < __a + __sz; \
