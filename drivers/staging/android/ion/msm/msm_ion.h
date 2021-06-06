@@ -15,7 +15,6 @@
 
 #include "../ion.h"
 #include "../../uapi/msm_ion.h"
-
 enum ion_permission_type {
 	IPT_TYPE_MM_CARVEOUT = 0,
 	IPT_TYPE_MFC_SHAREDMEM = 1,

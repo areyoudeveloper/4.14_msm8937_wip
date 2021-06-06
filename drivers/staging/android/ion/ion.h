@@ -15,9 +15,9 @@
  *
  */
 
-#ifndef _ION_H
-#define _ION_H
 
+#ifndef _LINUX_ION_H
+#define _LINUX_ION_H
 #include <linux/device.h>
 #include <linux/dma-direction.h>
 #include <linux/kref.h>
@@ -46,7 +46,7 @@
 #define ION_AUDIO_HEAP_NAME    "audio"
 
 #define ION_IS_CACHED(__flags)  ((__flags) & ION_FLAG_CACHED)
-
+#define ion_phys_addr_t phys_addr_t
 /**
  * Debug feature. Make ION allocations DMA
  * ready to help identify clients who are wrongly
