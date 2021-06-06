@@ -335,7 +335,6 @@ struct mmc_card {
 						/* for byte mode */
 #define MMC_QUIRK_NONSTD_SDIO	(1<<2)		/* non-standard SDIO card attached */
 						/* (missing CIA registers) */
-#define MMC_CARD_REMOVED	(1<<4)		/* card has been removed */
 #define MMC_QUIRK_BROKEN_CLK_GATING (1<<3)	/* clock gating the sdio bus will make card fail */
 #define MMC_QUIRK_NONSTD_FUNC_IF (1<<4)		/* SDIO card has nonstd function interfaces */
 #define MMC_QUIRK_DISABLE_CD	(1<<5)		/* disconnect CD/DAT[3] resistor */
@@ -398,8 +397,6 @@ struct mmc_card {
 	enum mmc_pon_type	pon_type;
 	bool cmdq_init;
 	struct mmc_bkops_info bkops;
-    bool err_in_sdr104;
-	bool sdr104_blocked;
 };
 
 static inline bool mmc_large_sector(struct mmc_card *card)
@@ -427,174 +424,6 @@ bool mmc_card_is_blockaddr(struct mmc_card *card);
 #define mmc_card_sdio(c)	((c)->type == MMC_TYPE_SDIO)
 #define mmc_card_cmdq(c)       ((c)->state & MMC_STATE_CMDQ)
 
-#define _FIXUP_EXT(_name, _manfid, _oemid, _rev_start, _rev_end,	\
-		   _cis_vendor, _cis_device,				\
-		   _fixup, _data, _ext_csd_rev)				\
-	{						   \
-		.name = (_name),			   \
-		.manfid = (_manfid),			   \
-		.oemid = (_oemid),			   \
-		.rev_start = (_rev_start),		   \
-		.rev_end = (_rev_end),			   \
-		.cis_vendor = (_cis_vendor),		   \
-		.cis_device = (_cis_device),		   \
-		.vendor_fixup = (_fixup),		   \
-		.data = (_data),			   \
-		.ext_csd_rev = (_ext_csd_rev),		   \
-	 }
-
-#define MMC_FIXUP_REV(_name, _manfid, _oemid, _rev_start, _rev_end,	\
-		      _fixup, _data, _ext_csd_rev)			\
-	_FIXUP_EXT(_name, _manfid,					\
-		   _oemid, _rev_start, _rev_end,			\
-		   SDIO_ANY_ID, SDIO_ANY_ID,				\
-		   _fixup, _data, _ext_csd_rev)				\
-
-#define MMC_FIXUP(_name, _manfid, _oemid, _fixup, _data) \
-	MMC_FIXUP_REV(_name, _manfid, _oemid, 0, -1ull, _fixup, _data,	\
-		      EXT_CSD_REV_ANY)
-
-#define MMC_FIXUP_EXT_CSD_REV(_name, _manfid, _oemid, _fixup, _data,	\
-			      _ext_csd_rev)				\
-	MMC_FIXUP_REV(_name, _manfid, _oemid, 0, -1ull, _fixup, _data,	\
-		      _ext_csd_rev)
-
-#define SDIO_FIXUP(_vendor, _device, _fixup, _data)			\
-	_FIXUP_EXT(CID_NAME_ANY, CID_MANFID_ANY,			\
-		    CID_OEMID_ANY, 0, -1ull,				\
-		   _vendor, _device,					\
-		   _fixup, _data, EXT_CSD_REV_ANY)			\
-
-#define cid_rev(hwrev, fwrev, year, month)	\
-	(((u64) hwrev) << 40 |                  \
-	 ((u64) fwrev) << 32 |                  \
-	 ((u64) year) << 16 |                   \
-	 ((u64) month))
-
-#define cid_rev_card(card)		  \
-	cid_rev(card->cid.hwrev,	  \
-		    card->cid.fwrev,      \
-		    card->cid.year,	  \
-		    card->cid.month)
-
-/*
- * Unconditionally quirk add/remove.
- */
-
-static inline void __maybe_unused add_quirk(struct mmc_card *card, int data)
-{
-	card->quirks |= data;
-}
-
-static inline void __maybe_unused remove_quirk(struct mmc_card *card, int data)
-{
-	card->quirks &= ~data;
-}
-
-#define mmc_card_mmc(c)		((c)->type == MMC_TYPE_MMC)
-#define mmc_card_sd(c)		((c)->type == MMC_TYPE_SD)
-#define mmc_card_sdio(c)	((c)->type == MMC_TYPE_SDIO)
-
-#define mmc_card_present(c)	((c)->state & MMC_STATE_PRESENT)
-#define mmc_card_readonly(c)	((c)->state & MMC_STATE_READONLY)
-#define mmc_card_blockaddr(c)	((c)->state & MMC_STATE_BLOCKADDR)
-#define mmc_card_ext_capacity(c) ((c)->state & MMC_CARD_SDXC)
-#define mmc_card_removed(c)	((c) && ((c)->state & MMC_CARD_REMOVED))
-#define mmc_card_doing_bkops(c)	((c)->state & MMC_STATE_DOING_BKOPS)
-#define mmc_card_suspended(c)	((c)->state & MMC_STATE_SUSPENDED)
-#define mmc_card_cmdq(c)       ((c)->state & MMC_STATE_CMDQ)
-#define mmc_card_doing_auto_bkops(c)	((c)->state & MMC_STATE_AUTO_BKOPS)
-
-#define mmc_card_set_present(c)	((c)->state |= MMC_STATE_PRESENT)
-#define mmc_card_set_readonly(c) ((c)->state |= MMC_STATE_READONLY)
-#define mmc_card_set_blockaddr(c) ((c)->state |= MMC_STATE_BLOCKADDR)
-#define mmc_card_set_ext_capacity(c) ((c)->state |= MMC_CARD_SDXC)
-#define mmc_card_set_removed(c) ((c)->state |= MMC_CARD_REMOVED)
-#define mmc_card_set_doing_bkops(c)	((c)->state |= MMC_STATE_DOING_BKOPS)
-#define mmc_card_clr_doing_bkops(c)	((c)->state &= ~MMC_STATE_DOING_BKOPS)
-#define mmc_card_set_suspended(c) ((c)->state |= MMC_STATE_SUSPENDED)
-#define mmc_card_clr_suspended(c) ((c)->state &= ~MMC_STATE_SUSPENDED)
-#define mmc_card_set_cmdq(c)           ((c)->state |= MMC_STATE_CMDQ)
-#define mmc_card_clr_cmdq(c)           ((c)->state &= ~MMC_STATE_CMDQ)
-#define mmc_card_set_auto_bkops(c)	((c)->state |= MMC_STATE_AUTO_BKOPS)
-#define mmc_card_clr_auto_bkops(c)	((c)->state &= ~MMC_STATE_AUTO_BKOPS)
-
-#define mmc_card_strobe(c) (((c)->ext_csd).strobe_support & MMC_STROBE_SUPPORT)
-
-/*
- * Quirk add/remove for MMC products.
- */
-
-static inline void __maybe_unused add_quirk_mmc(struct mmc_card *card, int data)
-{
-	if (mmc_card_mmc(card))
-		card->quirks |= data;
-}
-
-static inline void __maybe_unused remove_quirk_mmc(struct mmc_card *card,
-						   int data)
-{
-	if (mmc_card_mmc(card))
-		card->quirks &= ~data;
-}
-
-/*
- * Quirk add/remove for SD products.
- */
-
-static inline void __maybe_unused add_quirk_sd(struct mmc_card *card, int data)
-{
-	if (mmc_card_sd(card))
-		card->quirks |= data;
-}
-
-static inline void __maybe_unused remove_quirk_sd(struct mmc_card *card,
-						   int data)
-{
-	if (mmc_card_sd(card))
-		card->quirks &= ~data;
-}
-
-static inline int mmc_card_lenient_fn0(const struct mmc_card *c)
-{
-	return c->quirks & MMC_QUIRK_LENIENT_FN0;
-}
-
-static inline int mmc_blksz_for_byte_mode(const struct mmc_card *c)
-{
-	return c->quirks & MMC_QUIRK_BLKSZ_FOR_BYTE_MODE;
-}
-
-static inline int mmc_card_disable_cd(const struct mmc_card *c)
-{
-	return c->quirks & MMC_QUIRK_DISABLE_CD;
-}
-
-static inline int mmc_card_nonstd_func_interface(const struct mmc_card *c)
-{
-	return c->quirks & MMC_QUIRK_NONSTD_FUNC_IF;
-}
-
-static inline int mmc_card_broken_byte_mode_512(const struct mmc_card *c)
-{
-	return c->quirks & MMC_QUIRK_BROKEN_BYTE_MODE_512;
-}
-
-static inline int mmc_card_long_read_time(const struct mmc_card *c)
-{
-	return c->quirks & MMC_QUIRK_LONG_READ_TIME;
-}
-
-static inline int mmc_card_broken_irq_polling(const struct mmc_card *c)
-{
-	return c->quirks & MMC_QUIRK_BROKEN_IRQ_POLLING;
-}
-
-static inline int mmc_card_broken_hpi(const struct mmc_card *c)
-{
-	return c->quirks & MMC_QUIRK_BROKEN_HPI;
-}
-
 static inline bool mmc_card_support_auto_bkops(const struct mmc_card *c)
 {
 	return c->ext_csd.rev >= MMC_V5_1;
@@ -619,19 +448,10 @@ static inline bool mmc_enable_qca9377_settings(const struct mmc_card *c)
 {
 	return c->quirks & MMC_QUIRK_QCA9377_SETTINGS;
 }
-#define mmc_card_name(c)	((c)->cid.prod_name)
+
 #define mmc_dev_to_card(d)	container_of(d, struct mmc_card, dev)
 #define mmc_get_drvdata(c)	dev_get_drvdata(&(c)->dev)
 #define mmc_set_drvdata(c, d)	dev_set_drvdata(&(c)->dev, d)
-struct mmc_driver {
-	struct device_driver drv;
-	int (*probe)(struct mmc_card *);
-	void (*remove)(struct mmc_card *);
-	void (*shutdown)(struct mmc_card *);
-};
-
-extern int mmc_register_driver(struct mmc_driver *);
-extern void mmc_unregister_driver(struct mmc_driver *);
 
 extern int mmc_send_pon(struct mmc_card *card);
 extern void mmc_blk_cmdq_req_done(struct mmc_request *mrq);
