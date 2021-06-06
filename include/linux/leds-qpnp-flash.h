@@ -15,24 +15,20 @@
 
 #include <linux/leds.h>
 
-#define ENABLE_REGULATOR		BIT(0)
-#define DISABLE_REGULATOR		BIT(1)
-#define QUERY_MAX_AVAIL_CURRENT		BIT(2)
-#define QUERY_MAX_CURRENT		BIT(3)
+#define ENABLE_REGULATOR	BIT(0)
+#define DISABLE_REGULATOR	BIT(1)
+#define QUERY_MAX_CURRENT	BIT(2)
 
 #define FLASH_LED_PREPARE_OPTIONS_MASK	GENMASK(3, 0)
 
-int qpnp_flash_led_prepare(struct led_trigger *trig, int options,
-					int *max_current);
-#ifdef CONFIG_BACKLIGHT_QCOM_SPMI_WLED
-int wled_flash_led_prepare(struct led_trigger *trig, int options,
+#if (defined CONFIG_LEDS_QPNP_FLASH || defined CONFIG_LEDS_QPNP_FLASH_V2)
+extern int (*qpnp_flash_led_prepare)(struct led_trigger *trig, int options,
 					int *max_current);
 #else
-static inline int wled_flash_led_prepare(struct led_trigger *trig, int options,
+static inline int qpnp_flash_led_prepare(struct led_trigger *trig, int options,
 					int *max_current)
 {
-	return -EINVAL;
+	return -ENODEV;
 }
 #endif
-
 #endif
