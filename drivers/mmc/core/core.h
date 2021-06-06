@@ -14,7 +14,7 @@
 #include <linux/delay.h>
 
 #define MMC_CMD_RETRIES        3
-
+#define REQ_QUEUED		(1ULL << __REQ_QUEUED)
 void mmc_attach_bus(struct mmc_host *host, const struct mmc_bus_ops *ops);
 void mmc_detach_bus(struct mmc_host *host);
 

@@ -1105,8 +1105,8 @@ void mmc_request_done(struct mmc_host *host, struct mmc_request *mrq)
 							  mrq->io_start);
 				blk_update_latency_hist(
 					(mrq->data->flags & MMC_DATA_READ) ?
-					&host->io_lat_read :
-					&host->io_lat_write, delta_us);
+					&host->io_lat_s :
+					&host->io_lat_s, delta_us);
 			}
 #endif
 		}

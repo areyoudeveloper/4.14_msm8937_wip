@@ -180,13 +180,31 @@ struct mmc_request {
 
 	int			tag;
 };
-
+struct mmc_bus_ops {
+	void (*remove)(struct mmc_host *);
+	void (*detect)(struct mmc_host *);
+	int (*pre_suspend)(struct mmc_host *);
+	int (*suspend)(struct mmc_host *);
+	int (*resume)(struct mmc_host *);
+	int (*runtime_suspend)(struct mmc_host *);
+	int (*runtime_resume)(struct mmc_host *);
+	int (*runtime_idle)(struct mmc_host *);
+	int (*power_save)(struct mmc_host *);
+	int (*power_restore)(struct mmc_host *);
+	int (*alive)(struct mmc_host *);
+	int (*shutdown)(struct mmc_host *);
+	int (*reset)(struct mmc_host *);
+	int (*change_bus_speed)(struct mmc_host *, unsigned long *);
+	int (*pre_hibernate)(struct mmc_host *);
+	int (*post_hibernate)(struct mmc_host *);
+};
 struct mmc_card;
 struct mmc_cmdq_req;
 
 extern int mmc_cmdq_discard_queue(struct mmc_host *host, u32 tasks);
 extern int mmc_cmdq_halt(struct mmc_host *host, bool enable);
-extern int mmc_cmdq_halt_on_empty_queue(struct mmc_host *host);
+extern int mmc_cmdq_halt_on_empty_queue(struct mmc_host *host,
+				unsigned long timeout);
 extern void mmc_cmdq_post_req(struct mmc_host *host, int tag, int err);
 extern int mmc_cmdq_start_req(struct mmc_host *host,
 			      struct mmc_cmdq_req *cmdq_req);
@@ -207,8 +225,9 @@ extern void mmc_get_card(struct mmc_card *card);
 extern void mmc_put_card(struct mmc_card *card);
 extern void __mmc_put_card(struct mmc_card *card);
 extern void mmc_blk_init_bkops_statistics(struct mmc_card *card);
-
-extern void mmc_deferred_scaling(struct mmc_host *host);
+extern void mmc_release_host(struct mmc_host *host);
+extern int __mmc_claim_host(struct mmc_host *host, atomic_t *abort);
+extern void mmc_deferred_scaling(struct mmc_host *host, unsigned long timeout);
 extern void mmc_cmdq_clk_scaling_start_busy(struct mmc_host *host,
 	bool lock_needed);
 extern void mmc_cmdq_clk_scaling_stop_busy(struct mmc_host *host,
@@ -225,5 +244,15 @@ int mmc_wait_for_cmd(struct mmc_host *host, struct mmc_command *cmd,
 
 int mmc_hw_reset(struct mmc_host *host);
 void mmc_set_data_timeout(struct mmc_data *data, const struct mmc_card *card);
+/**
+ *	mmc_claim_host - exclusively claim a host
+ *	@host: mmc host to claim
+ *
+ *	Claim a host for a set of operations.
+ */
+static inline void mmc_claim_host(struct mmc_host *host)
+{
+	__mmc_claim_host(host, NULL);
+}
 
 #endif /* LINUX_MMC_CORE_H */
