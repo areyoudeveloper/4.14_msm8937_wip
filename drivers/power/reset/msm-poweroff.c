@@ -57,14 +57,25 @@ static bool scm_deassert_ps_hold_supported;
 static void __iomem *msm_ps_hold;
 static phys_addr_t tcsr_boot_misc_detect;
 static void scm_disable_sdi(void);
+static bool force_warm_reboot;
 
 /*
  * Runtime could be only changed value once.
  * There is no API from TZ to re-enable the registers.
  * So the SDI cannot be re-enabled when it already by-passed.
  */
-static int download_mode = 1;
+#ifdef CONFIG_QCOM_DLOAD_MODE
+/* Runtime could be only changed value once.
+ * There is no API from TZ to re-enable the registers.
+ * So the SDI cannot be re-enabled when it already by-passed.
+ */
 static struct kobject dload_kobj;
+
+static int download_mode = 1;
+#else
+static const int download_mode;
+#endif
+
 
 #ifdef CONFIG_QCOM_DLOAD_MODE
 #define EDL_MODE_PROP "qcom,msm-imem-emergency_download_mode"
@@ -83,7 +94,6 @@ static void *kaslr_imem_addr;
 #endif
 static bool scm_dload_supported;
 
-static bool force_warm_reboot;
 
 static int dload_set(const char *val, const struct kernel_param *kp);
 /* interface for exporting attributes */
@@ -94,6 +104,7 @@ struct reset_attribute {
 	size_t (*store)(struct kobject *kobj, struct attribute *attr,
 			const char *buf, size_t count);
 };
+
 #define to_reset_attr(_attr) \
 	container_of(_attr, struct reset_attribute, attr)
 #define RESET_ATTR(_name, _mode, _show, _store)	\
