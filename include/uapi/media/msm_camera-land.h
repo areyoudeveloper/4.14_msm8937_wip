@@ -5,7 +5,7 @@
 #include <linux/types.h>
 #include <linux/ioctl.h>
 
-#include <linux/msm_ion.h>
+#include "../../drivers/staging/android/uapi/ion.h"
 
 #define BIT(nr)   (1UL << (nr))
 

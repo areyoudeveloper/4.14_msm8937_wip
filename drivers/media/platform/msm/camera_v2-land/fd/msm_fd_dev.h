@@ -33,7 +33,7 @@
 #define MSM_FD_MAX_FACES_DETECTED 32
 /* Max number of regulators defined in device tree */
 #define MSM_FD_MAX_REGULATOR_NUM 3
-
+#define ion_phys_addr_t phys_addr_t
 /*
  * struct msm_fd_size - Structure contain FD size related values.
  * @width: Image width.

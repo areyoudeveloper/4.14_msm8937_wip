@@ -100,6 +100,10 @@ struct ion_heap_data {
 	__u32 reserved2;
 };
 
+struct ion_fd_data {
+	ion_user_handle_t handle;
+	int fd;
+};
 /**
  * struct ion_heap_query - collection of data about all heaps
  * @cnt - total number of heaps to be copied
