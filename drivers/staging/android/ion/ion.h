@@ -16,8 +16,8 @@
  */
 
 
-#ifndef _LINUX_ION_H
-#define _LINUX_ION_H
+#ifndef _ION_H
+#define _ION_H
 #include <linux/device.h>
 #include <linux/dma-direction.h>
 #include <linux/kref.h>
