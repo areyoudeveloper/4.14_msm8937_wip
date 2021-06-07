@@ -14,7 +14,8 @@
  * GNU General Public License for more details.
  *
  */
-
+#ifndef _ION_H
+#define 
 
 #include <linux/device.h>
 #include <linux/dma-direction.h>
@@ -73,15 +74,6 @@
  *
  * Provided by the board file.
  */
-struct ion_platform_heap {
-	enum ion_heap_type type;
-	unsigned int id;
-	const char *name;
-	phys_addr_t base;
-	size_t size;
-	phys_addr_t align;
-	void *priv;
-};
 
 /**
  * struct ion_platform_data - array of platform heaps passed from board file
@@ -90,15 +82,9 @@ struct ion_platform_heap {
  *
  * Provided by the board file in the form of platform data to a platform device.
  */
-struct ion_platform_data {
-	int nr;
-	struct ion_platform_heap *heaps;
-};
 
-struct ion_vma_list {
-	struct list_head list;
-	struct vm_area_struct *vma;
-};
+
+
 
 /**
  * struct ion_buffer - metadata for a particular buffer
@@ -117,25 +103,7 @@ struct ion_vma_list {
  * @sg_table:		the sg table for the buffer if dmap_cnt is not zero
  * @vmas:		list of vma's mapping this buffer
  */
-struct ion_buffer {
-	union {
-		struct rb_node node;
-		struct list_head list;
-	};
-	struct ion_device *dev;
-	struct ion_heap *heap;
-	unsigned long flags;
-	unsigned long private_flags;
-	size_t size;
-	void *priv_virt;
-	/* Protect ion buffer */
-	struct mutex lock;
-	int kmap_cnt;
-	void *vaddr;
-	struct sg_table *sg_table;
-	struct list_head attachments;
-	struct list_head vmas;
-};
+
 
 void ion_buffer_destroy(struct ion_buffer *buffer);
 
@@ -146,16 +114,6 @@ void ion_buffer_destroy(struct ion_buffer *buffer);
  * @buffer_lock:	lock protecting the tree of buffers
  * @lock:		rwsem protecting the tree of heaps and clients
  */
-struct ion_device {
-	struct miscdevice dev;
-	struct rb_root buffers;
-	/* buffer_lock used for adding and removing buffers */
-	struct mutex buffer_lock;
-	struct rw_semaphore lock;
-	struct plist_head heaps;
-	struct dentry *debug_root;
-	int heap_cnt;
-};
 
 /**
  * struct ion_heap_ops - ops to operate on a given heap
@@ -172,17 +130,6 @@ struct ion_device {
  * case, the pages being free'd must be truly free'd back to the
  * system, not put in a page pool or otherwise cached.
  */
-struct ion_heap_ops {
-	int (*allocate)(struct ion_heap *heap,
-			struct ion_buffer *buffer, unsigned long len,
-			unsigned long flags);
-	void (*free)(struct ion_buffer *buffer);
-	void * (*map_kernel)(struct ion_heap *heap, struct ion_buffer *buffer);
-	void (*unmap_kernel)(struct ion_heap *heap, struct ion_buffer *buffer);
-	int (*map_user)(struct ion_heap *mapper, struct ion_buffer *buffer,
-			struct vm_area_struct *vma);
-	int (*shrink)(struct ion_heap *heap, gfp_t gfp_mask, int nr_to_scan);
-};
 
 /**
  * heap flags - flags between the heaps and core ion code
@@ -226,26 +173,6 @@ struct ion_heap_ops {
  * On others, some blocks might require large physically contiguous buffers
  * that are allocated from a specially reserved heap.
  */
-struct ion_heap {
-	struct plist_node node;
-	struct ion_device *dev;
-	enum ion_heap_type type;
-	struct ion_heap_ops *ops;
-	unsigned long flags;
-	unsigned int id;
-	const char *name;
-	struct shrinker shrinker;
-	void *priv;
-	struct list_head free_list;
-	size_t free_list_size;
-	/* Protect the free list */
-	spinlock_t free_lock;
-	wait_queue_head_t waitqueue;
-	struct task_struct *task;
-	atomic_long_t total_allocated;
-
-	int (*debug_show)(struct ion_heap *heap, struct seq_file *, void *);
-};
 
 /**
  * ion_buffer_cached - this ion buffer is cached
@@ -428,18 +355,7 @@ struct ion_heap *ion_secure_carveout_heap_create(
  * been invalidated from the cache, provides a significant performance benefit
  * on many systems
  */
-struct ion_page_pool {
-	int high_count;
-	int low_count;
-	bool cached;
-	struct list_head high_items;
-	struct list_head low_items;
-	/* Protect the pool */
-	struct mutex mutex;
-	gfp_t gfp_mask;
-	unsigned int order;
-	struct plist_node list;
-};
+
 
 struct ion_page_pool *ion_page_pool_create(gfp_t gfp_mask, unsigned int order,
 					   bool cached);
@@ -687,4 +603,5 @@ static inline int ion_handle_get_flags(struct ion_client *client,
 	return -ENODEV;
 }
 
-
+#endif
+#endif 
