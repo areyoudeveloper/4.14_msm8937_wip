@@ -19,7 +19,7 @@
 
 #include <linux/ioctl.h>
 #include <linux/types.h>
-typedef int ion_user_handle_t;
+
 /**
  * enum ion_heap_types - list of all possible types of heaps
  * @ION_HEAP_TYPE_SYSTEM:	 memory allocated via vmalloc
@@ -77,12 +77,10 @@ enum ion_heap_type {
  */
 struct ion_allocation_data {
 	__u64 len;
-    __u64 align;
 	__u32 heap_id_mask;
 	__u32 flags;
 	__u32 fd;
 	__u32 unused;
-    ion_user_handle_t handle;
 };
 
 #define MAX_HEAP_NAME			32
@@ -102,18 +100,6 @@ struct ion_heap_data {
 	__u32 reserved2;
 };
 
-struct ion_fd_data {
-	ion_user_handle_t handle;
-	int fd;
-};
-
-/**
- * struct ion_handle_data - a handle passed to/from the kernel
- * @handle:	a handle
- */
-struct ion_handle_data {
-	ion_user_handle_t handle;
-};
 /**
  * struct ion_heap_query - collection of data about all heaps
  * @cnt - total number of heaps to be copied

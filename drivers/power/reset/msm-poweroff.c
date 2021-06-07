@@ -50,24 +50,21 @@
 #define SCM_DLOAD_BOTHDUMPS	(SCM_DLOAD_MINIDUMP | SCM_DLOAD_FULLDUMP)
 
 static int restart_mode;
-static void *restart_reason;
+static void *restart_reason, *dload_type_addr;
 static bool scm_pmic_arbiter_disable_supported;
 static bool scm_deassert_ps_hold_supported;
 /* Download mode master kill-switch */
 static void __iomem *msm_ps_hold;
 static phys_addr_t tcsr_boot_misc_detect;
 static void scm_disable_sdi(void);
-static bool force_warm_reboot;
 
-#ifdef CONFIG_QCOM_DLOAD_MODE
-/* Runtime could be only changed value once.
+/*
+ * Runtime could be only changed value once.
  * There is no API from TZ to re-enable the registers.
  * So the SDI cannot be re-enabled when it already by-passed.
  */
 static int download_mode = 1;
-#else
-static const int download_mode;
-#endif
+static struct kobject dload_kobj;
 
 #ifdef CONFIG_QCOM_DLOAD_MODE
 #define EDL_MODE_PROP "qcom,msm-imem-emergency_download_mode"
@@ -85,8 +82,8 @@ static void *emergency_dload_mode_addr;
 static void *kaslr_imem_addr;
 #endif
 static bool scm_dload_supported;
-static struct kobject dload_kobj;
-static void *dload_type_addr;
+
+static bool force_warm_reboot;
 
 static int dload_set(const char *val, const struct kernel_param *kp);
 /* interface for exporting attributes */
@@ -117,7 +114,7 @@ static struct notifier_block panic_blk = {
 	.notifier_call	= panic_prep_restart,
 };
 
-static int scm_set_dload_mode(int arg1, int arg2)
+int scm_set_dload_mode(int arg1, int arg2)
 {
 	struct scm_desc desc = {
 		.args[0] = arg1,
@@ -131,10 +128,6 @@ static int scm_set_dload_mode(int arg1, int arg2)
 
 		return 0;
 	}
-
-	if (!is_scm_armv8())
-		return scm_call_atomic2(SCM_SVC_BOOT, SCM_DLOAD_CMD, arg1,
-					arg2);
 
 	return scm_call2_atomic(SCM_SIP_FNID(SCM_SVC_BOOT, SCM_DLOAD_CMD),
 				&desc);
@@ -197,6 +190,11 @@ static int dload_set(const char *val, const struct kernel_param *kp)
 
 	int old_val = download_mode;
 
+	if (!download_mode) {
+		pr_err("Error: SDI dynamic enablement is not supported\n");
+		return -EINVAL;
+	}
+
 	ret = param_set_int(val, kp);
 
 	if (ret)
@@ -209,6 +207,9 @@ static int dload_set(const char *val, const struct kernel_param *kp)
 	}
 
 	set_dload_mode(download_mode);
+
+	if (!download_mode)
+		scm_disable_sdi();
 
 	return 0;
 }
@@ -239,11 +240,7 @@ static void scm_disable_sdi(void)
 	};
 
 	/* Needed to bypass debug image on some chips */
-	if (!is_scm_armv8())
-		ret = scm_call_atomic2(SCM_SVC_BOOT,
-			       SCM_WDOG_DEBUG_BOOT_PART, 1, 0);
-	else
-		ret = scm_call2_atomic(SCM_SIP_FNID(SCM_SVC_BOOT,
+	ret = scm_call2_atomic(SCM_SIP_FNID(SCM_SVC_BOOT,
 			  SCM_WDOG_DEBUG_BOOT_PART), &desc);
 	if (ret)
 		pr_err("Failed to disable secure wdog debug: %d\n", ret);
@@ -270,12 +267,8 @@ static void halt_spmi_pmic_arbiter(void)
 
 	if (scm_pmic_arbiter_disable_supported) {
 		pr_crit("Calling SCM to disable SPMI PMIC arbiter\n");
-		if (!is_scm_armv8())
-			scm_call_atomic1(SCM_SVC_PWR,
-					 SCM_IO_DISABLE_PMIC_ARBITER, 0);
-		else
-			scm_call2_atomic(SCM_SIP_FNID(SCM_SVC_PWR,
-				  SCM_IO_DISABLE_PMIC_ARBITER), &desc);
+		scm_call2_atomic(SCM_SIP_FNID(SCM_SVC_PWR,
+				SCM_IO_DISABLE_PMIC_ARBITER), &desc);
 	}
 }
 
@@ -305,10 +298,6 @@ static void msm_restart_prepare(const char *cmd)
 
 	if (force_warm_reboot)
 		pr_info("Forcing a warm reset of the system\n");
-
-#ifdef CONFIG_MSM_PRESERVE_MEM
-	need_warm_reset = true;
-#endif
 
 	/* Hard reset the PMIC unless memory contents must be maintained. */
 	if (force_warm_reboot || need_warm_reset)
@@ -341,33 +330,14 @@ static void msm_restart_prepare(const char *cmd)
 			qpnp_pon_set_restart_reason(
 				PON_RESTART_REASON_KEYS_CLEAR);
 			__raw_writel(0x7766550a, restart_reason);
-		} else if (!strncmp(cmd, "fastmmi", 7)) {
-			__raw_writel(0x77665505, restart_reason);
 		} else if (!strncmp(cmd, "oem-", 4)) {
 			unsigned long code;
-			unsigned long reset_reason;
 			int ret;
 
 			ret = kstrtoul(cmd + 4, 16, &code);
-			if (!ret) {
-				/* Bit-2 to bit-7 of SOFT_RB_SPARE for hard
-				 * reset reason:
-				 * Value 0 to 31 for common defined features
-				 * Value 32 to 63 for oem specific features
-				 */
-				reset_reason = code +
-						PON_RESTART_REASON_OEM_MIN;
-				if (reset_reason > PON_RESTART_REASON_OEM_MAX ||
-				   reset_reason < PON_RESTART_REASON_OEM_MIN) {
-					pr_err("Invalid oem reset reason: %lx\n",
-						reset_reason);
-				} else {
-					qpnp_pon_set_restart_reason(
-						reset_reason);
-				}
+			if (!ret)
 				__raw_writel(0x6f656d00 | (code & 0xff),
 					     restart_reason);
-			}
 		} else if (!strncmp(cmd, "edl", 3)) {
 			enable_emergency_dload_mode();
 		} else {
@@ -446,7 +416,6 @@ static void do_msm_poweroff(void)
 	pr_err("Powering off has failed\n");
 }
 
-#ifdef CONFIG_QCOM_DLOAD_MODE
 static ssize_t attr_show(struct kobject *kobj, struct attribute *attr,
 				char *buf)
 {
@@ -577,7 +546,6 @@ static struct attribute *reset_attrs[] = {
 static struct attribute_group reset_attr_group = {
 	.attrs = reset_attrs,
 };
-#endif
 
 static int msm_restart_probe(struct platform_device *pdev)
 {

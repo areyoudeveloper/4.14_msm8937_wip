@@ -114,10 +114,5 @@ struct ion_prefetch_data {
 
 #define ION_IOC_DRAIN			_IOWR(ION_IOC_MSM_MAGIC, 4, \
 						struct ion_prefetch_data)
-enum ion_fixed_position {
-	NOT_FIXED,
-	FIXED_LOW,
-	FIXED_MIDDLE,
-	FIXED_HIGH,
-};
+
 #endif /* _UAPI_LINUX_MSM_ION_H */
