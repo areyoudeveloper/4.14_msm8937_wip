@@ -6,6 +6,20 @@
 #include <linux/ioctl.h>
 
 #include "../../drivers/staging/android/uapi/ion.h"
+typedef ion_user_handle_t;
+
+struct ion_fd_data {
+	ion_user_handle_t handle;
+	int fd;
+};
+
+/**
+ * struct ion_handle_data - a handle passed to/from the kernel
+ * @handle:	a handle
+ */
+struct ion_handle_data {
+	ion_user_handle_t handle;
+};
 
 #define BIT(nr)   (1UL << (nr))
 
