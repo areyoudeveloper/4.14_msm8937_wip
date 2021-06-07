@@ -648,7 +648,11 @@ struct v4l2_pix_format {
 #define V4L2_PIX_FMT_HEVC     v4l2_fourcc('H', 'E', 'V', 'C') /* HEVC stream */
 #define V4L2_PIX_FMT_TME      v4l2_fourcc('T', 'M', 'E', '0') /* TME stream */
 #define V4L2_PIX_FMT_CVP      v4l2_fourcc('C', 'V', 'P', '0') /* CVP stream */
-
+#define V4L2_PIX_FMT_DIVX_311  v4l2_fourcc('D', 'I', 'V', '3') /* DIVX311     */
+#define V4L2_PIX_FMT_DIVX      v4l2_fourcc('D', 'I', 'V', 'X') /* DIVX        */
+#define V4L2_PIX_FMT_HEVC v4l2_fourcc('H', 'E', 'V', 'C') /* for HEVC stream */
+#define V4L2_PIX_FMT_HEVC_HYBRID v4l2_fourcc('H', 'V', 'C', 'H')
+#define V4L2_PIX_FMT_TME v4l2_fourcc('T', 'M', 'E', '0') /* for TME stream */
 /*  Vendor-specific formats   */
 #define V4L2_PIX_FMT_CPIA1    v4l2_fourcc('C', 'P', 'I', 'A') /* cpia1 YUV */
 #define V4L2_PIX_FMT_WNVA     v4l2_fourcc('W', 'N', 'V', 'A') /* Winnov hw compress */

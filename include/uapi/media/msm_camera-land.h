@@ -7,7 +7,7 @@
 
 #include "../../drivers/staging/android/uapi/ion.h"
 typedef ion_user_handle_t;
-
+struct ion_client;
 struct ion_fd_data {
 	ion_user_handle_t handle;
 	int fd;
@@ -20,6 +20,60 @@ struct ion_fd_data {
 struct ion_handle_data {
 	ion_user_handle_t handle;
 };
+/**
+ * ion_client_create() -  allocate a client and returns it
+ * @dev:		the global ion device
+ * @name:		used for debugging
+ */
+struct ion_client *ion_client_create(struct ion_device *dev,
+				     const char *name);
+
+void ion_free(struct ion_client *client, struct ion_handle *handle);
+
+/**
+ * ion_import_dma_buf() - get ion_handle from dma-buf
+ * @client:	the client
+ * @dmabuf:	the dma-buf
+ *
+ * Get the ion_buffer associated with the dma-buf and return the ion_handle.
+ * If no ion_handle exists for this buffer, return newly created ion_handle.
+ * If dma-buf from another exporter is passed, return ERR_PTR(-EINVAL)
+ */
+struct ion_handle *ion_import_dma_buf(struct ion_client *client,
+				      struct dma_buf *dmabuf);
+/**
+ * ion_import_dma_buf_fd() - given a dma-buf fd from the ion exporter get handle
+ * @client:	the client
+ * @fd:		the dma-buf fd
+ *
+ * Given an dma-buf fd that was allocated through ion via ion_share_dma_buf_fd,
+ * import that fd and return a handle representing it. If a dma-buf from
+ * another exporter is passed in this function will return ERR_PTR(-EINVAL)
+ */
+struct ion_handle *ion_import_dma_buf_fd(struct ion_client *client, int fd);
+/**
+ * ion_handle_get_size - get the allocated size of a given handle
+ *
+ * @client - client who allocated the handle
+ * @handle - handle to get the size
+ * @size - pointer to store the size
+ *
+ * gives the allocated size of a handle. returns 0 on success, negative
+ * value on error
+ *
+ * NOTE: This is intended to be used only to get a size to pass to map_iommu.
+ * You should *NOT* rely on this for any other usage.
+ */
+
+int ion_handle_get_size(struct ion_client *client, struct ion_handle *handle,
+			size_t *size);
+static inline struct ion_client *msm_ion_client_create(const char *name)
+{
+	return ERR_PTR(-ENODEV);
+}
+#define ion_heap_unmap_kernel ion_unmap_kernel
+#define ion_heap_map_kernel ion_map_kernel
+
 
 #define BIT(nr)   (1UL << (nr))
 

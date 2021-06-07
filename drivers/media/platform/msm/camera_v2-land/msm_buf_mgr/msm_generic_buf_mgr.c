@@ -12,7 +12,7 @@
 #define pr_fmt(fmt) "CAM-BUFMGR %s:%d " fmt, __func__, __LINE__
 
 #include "msm_generic_buf_mgr.h"
-
+#include <uapi/media/msm_camera-land.h>
 static struct msm_buf_mngr_device *msm_buf_mngr_dev;
 
 struct v4l2_subdev *msm_buf_mngr_get_subdev(void)
