@@ -16,8 +16,6 @@
  */
 
 
-#ifndef _ION_H
-#define _ION_H
 #include <linux/device.h>
 #include <linux/dma-direction.h>
 #include <linux/kref.h>
@@ -689,4 +687,4 @@ static inline int ion_handle_get_flags(struct ion_client *client,
 	return -ENODEV;
 }
 
-#endif /* _ION_H */
+
