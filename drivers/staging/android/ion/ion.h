@@ -15,7 +15,7 @@
  *
  */
 #ifndef _ION_H
-#define 
+#define _ION_H
 
 #include <linux/device.h>
 #include <linux/dma-direction.h>
@@ -105,31 +105,8 @@
  */
 
 
-void ion_buffer_destroy(struct ion_buffer *buffer);
 
-/**
- * struct ion_device - the metadata of the ion device node
- * @dev:		the actual misc device
- * @buffers:		an rb tree of all the existing buffers
- * @buffer_lock:	lock protecting the tree of buffers
- * @lock:		rwsem protecting the tree of heaps and clients
- */
 
-/**
- * struct ion_heap_ops - ops to operate on a given heap
- * @allocate:		allocate memory
- * @free:		free memory
- * @map_kernel		map memory to the kernel
- * @unmap_kernel	unmap memory to the kernel
- * @map_user		map memory to userspace
- *
- * allocate, phys, and map_user return 0 on success, -errno on error.
- * map_dma and map_kernel return pointer on success, ERR_PTR on
- * error. @free will be called with ION_PRIV_FLAG_SHRINKER_FREE set in
- * the buffer's private_flags when called from a shrinker. In that
- * case, the pages being free'd must be truly free'd back to the
- * system, not put in a page pool or otherwise cached.
- */
 
 /**
  * heap flags - flags between the heaps and core ion code
@@ -174,129 +151,25 @@ void ion_buffer_destroy(struct ion_buffer *buffer);
  * that are allocated from a specially reserved heap.
  */
 
-/**
- * ion_buffer_cached - this ion buffer is cached
- * @buffer:		buffer
- *
- * indicates whether this ion buffer is cached
- */
-bool ion_buffer_cached(struct ion_buffer *buffer);
 
-/**
- * ion_buffer_fault_user_mappings - fault in user mappings of this buffer
- * @buffer:		buffer
- *
- * indicates whether userspace mappings of this buffer will be faulted
- * in, this can affect how buffers are allocated from the heap.
- */
-bool ion_buffer_fault_user_mappings(struct ion_buffer *buffer);
-
-/**
- * ion_device_create - allocates and returns an ion device
- *
- * returns a valid device or -PTR_ERR
- */
 struct ion_device *ion_device_create(void);
 
 /**
  * ion_device_add_heap - adds a heap to the ion device
  * @dev:		the device
  * @heap:		the heap to add
- */
-void ion_device_add_heap(struct ion_device *dev, struct ion_heap *heap);
+**/
 
-/**
- * some helpers for common operations on buffers using the sg_table
- * and vaddr fields
- */
-void *ion_heap_map_kernel(struct ion_heap *heap, struct ion_buffer *buffer);
-void ion_heap_unmap_kernel(struct ion_heap *heap, struct ion_buffer *buffer);
-int ion_heap_map_user(struct ion_heap *heap, struct ion_buffer *buffer,
-		      struct vm_area_struct *vma);
-int ion_heap_buffer_zero(struct ion_buffer *buffer);
 int ion_heap_pages_zero(struct page *page, size_t size, pgprot_t pgprot);
 
 int ion_alloc_fd(size_t len, unsigned int heap_id_mask, unsigned int flags);
 
-/**
- * ion_heap_init_shrinker
- * @heap:		the heap
- *
- * If a heap sets the ION_HEAP_FLAG_DEFER_FREE flag or defines the shrink op
- * this function will be called to setup a shrinker to shrink the freelists
- * and call the heap's shrink op.
- */
-void ion_heap_init_shrinker(struct ion_heap *heap);
 
-/**
- * ion_heap_init_deferred_free -- initialize deferred free functionality
- * @heap:		the heap
- *
- * If a heap sets the ION_HEAP_FLAG_DEFER_FREE flag this function will
- * be called to setup deferred frees. Calls to free the buffer will
- * return immediately and the actual free will occur some time later
- */
-int ion_heap_init_deferred_free(struct ion_heap *heap);
 
-/**
- * ion_heap_freelist_add - add a buffer to the deferred free list
- * @heap:		the heap
- * @buffer:		the buffer
- *
- * Adds an item to the deferred freelist.
- */
-void ion_heap_freelist_add(struct ion_heap *heap, struct ion_buffer *buffer);
 
-/**
- * ion_heap_freelist_drain - drain the deferred free list
- * @heap:		the heap
- * @size:		amount of memory to drain in bytes
- *
- * Drains the indicated amount of memory from the deferred freelist immediately.
- * Returns the total amount freed.  The total freed may be higher depending
- * on the size of the items in the list, or lower if there is insufficient
- * total memory on the freelist.
- */
-size_t ion_heap_freelist_drain(struct ion_heap *heap, size_t size);
 
-/**
- * ion_heap_freelist_shrink - drain the deferred free
- *				list, skipping any heap-specific
- *				pooling or caching mechanisms
- *
- * @heap:		the heap
- * @size:		amount of memory to drain in bytes
- *
- * Drains the indicated amount of memory from the deferred freelist immediately.
- * Returns the total amount freed.  The total freed may be higher depending
- * on the size of the items in the list, or lower if there is insufficient
- * total memory on the freelist.
- *
- * Unlike with @ion_heap_freelist_drain, don't put any pages back into
- * page pools or otherwise cache the pages. Everything must be
- * genuinely free'd back to the system. If you're free'ing from a
- * shrinker you probably want to use this. Note that this relies on
- * the heap.ops.free callback honoring the ION_PRIV_FLAG_SHRINKER_FREE
- * flag.
- */
-size_t ion_heap_freelist_shrink(struct ion_heap *heap, size_t size);
 
-/**
- * ion_heap_freelist_size - returns the size of the freelist in bytes
- * @heap:		the heap
- */
-size_t ion_heap_freelist_size(struct ion_heap *heap);
 
-/**
- * functions for creating and destroying the built in ion heaps.
- * architectures can add their own custom architecture specific
- * heaps as appropriate.
- */
-
-struct ion_heap *ion_heap_create(struct ion_platform_heap *heap_data);
-
-struct ion_heap *ion_system_heap_create(struct ion_platform_heap *unused);
-struct ion_heap *ion_system_contig_heap_create(struct ion_platform_heap *heap);
 
 struct ion_heap *ion_carveout_heap_create(struct ion_platform_heap *heap_data);
 
