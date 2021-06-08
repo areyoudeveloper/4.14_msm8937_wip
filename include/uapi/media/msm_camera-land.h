@@ -71,8 +71,8 @@ static inline struct ion_client *msm_ion_client_create(const char *name)
 {
 	return ERR_PTR(-ENODEV);
 }
-#define ion_heap_unmap_kernel ion_unmap_kernel
-#define ion_heap_map_kernel ion_map_kernel
+struct *ion_heap_unmap_kernel ion_unmap_kernel;
+struct *ion_heap_map_kernel ion_map_kernel;
 
 
 #define BIT(nr)   (1UL << (nr))
